@@ -3,9 +3,6 @@ import { GoogleGenAI } from '@google/genai';
 import { ChefHat, Send, Sparkles, AlertCircle } from 'lucide-react';
 import Markdown from 'react-markdown';
 
-// Initialize the Gemini client using the injected API key
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 export default function AIAdvisor() {
   const [ingredients, setIngredients] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +17,12 @@ export default function AIAdvisor() {
     setSuggestion('');
     
     try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('GEMINI_API_KEY is not configured. If you are deploying this app, please add the GEMINI_API_KEY environment variable to your hosting platform (like Netlify).');
+      }
+      
+      const ai = new GoogleGenAI({ apiKey });
       const prompt = `I am a catering business owner (Mas Suria Catering). 
 I have accidentally bought or have leftover of the following ingredients: ${ingredients}.
 
