@@ -1,13 +1,14 @@
 import { format } from 'date-fns';
-import { Trash2, TrendingUp, TrendingDown, DollarSign, Package } from 'lucide-react';
+import { Trash2, TrendingUp, TrendingDown, DollarSign, Package, Edit2 } from 'lucide-react';
 import { CostingReport } from '../types';
 
 interface ReportsListProps {
   reports: CostingReport[];
   onDelete: (id: string) => void;
+  onEdit: (report: CostingReport) => void;
 }
 
-export default function ReportsList({ reports, onDelete }: ReportsListProps) {
+export default function ReportsList({ reports, onDelete, onEdit }: ReportsListProps) {
   if (reports.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center">
@@ -48,14 +49,24 @@ export default function ReportsList({ reports, onDelete }: ReportsListProps) {
                   Saved {format(new Date(report.date), "MMM dd, yyyy")}
                 </p>
               </div>
-              <button 
-                onClick={() => {
-                  if (confirm('Are you sure you want to delete this report?')) onDelete(report.id);
-                }}
-                className="text-slate-400 hover:text-red-500 transition-colors p-1"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => onEdit(report)}
+                  className="text-slate-400 hover:text-indigo-500 transition-colors p-1"
+                  title="Edit Report"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this report?')) onDelete(report.id);
+                  }}
+                  className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                  title="Delete Report"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             
             <div className="p-5 flex-1 space-y-4">
