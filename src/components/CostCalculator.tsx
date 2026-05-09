@@ -26,9 +26,18 @@ export default function CostCalculator({ initialReport, onSave }: CostCalculator
     }
   }, [eventDate]);
   
-  const [menus, setMenus] = useState<Menu[]>(initialReport?.menus || [
-    { id: uuidv4(), name: 'Main Course', materials: [{ id: uuidv4(), name: '', quantity: 1, unit: 'kg', cost: 0 }] }
-  ]);
+  const [menus, setMenus] = useState<Menu[]>(() => {
+    if (initialReport?.menus && initialReport.menus.length > 0) {
+      return initialReport.menus;
+    }
+    if (initialReport?.materials && initialReport.materials.length > 0) {
+      // Create a default menu for legacy materials
+      return [{ id: uuidv4(), name: 'Main Course', materials: initialReport.materials }];
+    }
+    return [
+      { id: uuidv4(), name: 'Main Course', materials: [{ id: uuidv4(), name: '', quantity: 1, unit: 'kg', cost: 0 }] }
+    ];
+  });
   
   const [labourItems, setLabourItems] = useState<LabourItem[]>(initialReport?.labourItems || [
     { id: uuidv4(), role: '', staffCount: 1, hours: 1, ratePerHour: 0 }
