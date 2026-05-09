@@ -3,14 +3,15 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend
 } from 'recharts';
 import { format, parseISO, getMonth, getYear } from 'date-fns';
-import { DollarSign, TrendingUp, ShoppingCart, Activity, Printer, Eye, X } from 'lucide-react';
+import { DollarSign, TrendingUp, ShoppingCart, Activity, Printer, Eye, X, Edit2 } from 'lucide-react';
 import { CostingReport } from '../types';
 
 interface DashboardProps {
   reports: CostingReport[];
+  onEdit: (report: CostingReport) => void;
 }
 
-export default function Dashboard({ reports }: DashboardProps) {
+export default function Dashboard({ reports, onEdit }: DashboardProps) {
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   
@@ -71,13 +72,25 @@ export default function Dashboard({ reports }: DashboardProps) {
           >
             <X className="w-5 h-5 mr-1" /> Close
           </button>
-          <button 
-            onClick={() => window.print()}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print PDF
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => {
+                setViewingReport(null);
+                onEdit(viewingReport);
+              }}
+              className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm"
+            >
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit
+            </button>
+            <button 
+              onClick={() => window.print()}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Print PDF
+            </button>
+          </div>
         </div>
         
         <div className="p-8 max-w-4xl mx-auto space-y-8 bg-white" id="printable-report">
@@ -301,13 +314,22 @@ export default function Dashboard({ reports }: DashboardProps) {
                         RM {r.profitAmount.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button 
-                          onClick={() => setViewingReport(r)}
-                          className="inline-flex items-center justify-center p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                          title="View & Print PDF"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button 
+                            onClick={() => onEdit(r)}
+                            className="inline-flex items-center justify-center p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="Edit Report"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => setViewingReport(r)}
+                            className="inline-flex items-center justify-center p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="View & Print PDF"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
