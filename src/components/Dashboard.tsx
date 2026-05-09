@@ -3,7 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend
 } from 'recharts';
 import { format, parseISO, getMonth, getYear } from 'date-fns';
-import { DollarSign, TrendingUp, ShoppingCart, Activity, Printer, Eye, X, Edit2 } from 'lucide-react';
+import { DollarSign, TrendingUp, ShoppingCart, Activity, Printer, Eye, X, Edit2, FileBarChart } from 'lucide-react';
 import { CostingReport } from '../types';
 
 interface DashboardProps {
@@ -18,6 +18,7 @@ export default function Dashboard({ reports, onEdit }: DashboardProps) {
   const [selectedMonth, setSelectedMonth] = useState<number | 'all'>('all');
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [viewingReport, setViewingReport] = useState<CostingReport | null>(null);
+  const [viewingSummary, setViewingSummary] = useState<boolean>(false);
 
   const filteredReports = useMemo(() => {
     return reports.filter(r => {
@@ -154,6 +155,115 @@ export default function Dashboard({ reports, onEdit }: DashboardProps) {
     );
   }
 
+  if (viewingSummary) {
+    const periodTitle = selectedMonth === 'all' 
+      ? `Financial Summary Report - ${selectedYear}`
+      : `Financial Summary Report - ${format(new Date(selectedYear, selectedMonth as number, 1), 'MMMM yyyy')}`;
+
+    // Generate breakdown data based on period
+    let breakdownData: { label: string; sales: number; cost: number; profit: number }[] = [];
+    
+    if (selectedMonth === 'all') {
+      // Group by month
+      for (let i = 0; i < 12; i++) {
+        const monthReports = filteredReports.filter(r => getMonth(parseISO(r.eventDate || r.date)) === i);
+        if (monthReports.length > 0) {
+          const mSales = monthReports.reduce((sum, r) => sum + r.sellingPrice, 0);
+          const mCost = monthReports.reduce((sum, r) => sum + r.totalCost, 0);
+          const mProfit = monthReports.reduce((sum, r) => sum + r.profitAmount, 0);
+          breakdownData.push({
+            label: format(new Date(2000, i, 1), 'MMMM'),
+            sales: mSales,
+            cost: mCost,
+            profit: mProfit
+          });
+        }
+      }
+    } else {
+      // Detail by event
+      breakdownData = filteredReports.map(r => ({
+        label: `${format(parseISO(r.eventDate || r.date), 'MMM dd')} - ${r.title}`,
+        sales: r.sellingPrice,
+        cost: r.totalCost,
+        profit: r.profitAmount
+      }));
+    }
+
+    return (
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden min-h-screen">
+        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 print:hidden sticky top-0 z-10">
+          <button 
+            onClick={() => setViewingSummary(false)}
+            className="text-slate-600 hover:text-slate-900 flex items-center font-medium"
+          >
+            <X className="w-5 h-5 mr-1" /> Close
+          </button>
+          <button 
+            onClick={() => window.print()}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Print PDF
+          </button>
+        </div>
+        
+        <div className="p-8 max-w-4xl mx-auto space-y-8 bg-white" id="printable-summary">
+          <div className="text-center border-b pb-8 border-slate-200">
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">{periodTitle}</h1>
+            <p className="text-slate-500 uppercase tracking-widest text-sm font-bold">Mas Suria Catering</p>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-6 pt-2 pb-6 border-b border-slate-200">
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 text-center">
+              <p className="text-slate-500 mb-1 text-sm font-bold uppercase tracking-wider">Total Revenue</p>
+              <p className="font-bold text-slate-800 text-3xl">RM {summary.sales.toFixed(2)}</p>
+            </div>
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 text-center">
+              <p className="text-slate-500 mb-1 text-sm font-bold uppercase tracking-wider">Total Expenses</p>
+              <p className="font-bold text-slate-800 text-3xl">RM {summary.cost.toFixed(2)}</p>
+            </div>
+            <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-100 text-center">
+              <p className="text-emerald-700 mb-1 text-sm font-bold uppercase tracking-wider">Net Profit</p>
+              <p className="font-bold text-emerald-700 text-3xl">RM {summary.profit.toFixed(2)}</p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-slate-800 text-lg font-bold mb-4">Breakdown</h3>
+            <div className="overflow-x-auto border border-slate-200 rounded-lg">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 uppercase text-[10px] tracking-wider text-slate-500 font-bold">
+                    <th className="px-6 py-4">{selectedMonth === 'all' ? 'Month' : 'Event'}</th>
+                    <th className="px-6 py-4 text-right">Revenue</th>
+                    <th className="px-6 py-4 text-right">Expenses</th>
+                    <th className="px-6 py-4 text-right">Profit</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {breakdownData.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-500">No data available for this period.</td>
+                    </tr>
+                  ) : (
+                    breakdownData.map((item, i) => (
+                      <tr key={i} className="border-b border-slate-100 last:border-b-0">
+                        <td className="px-6 py-4 font-medium text-slate-800">{item.label}</td>
+                        <td className="px-6 py-4 text-right text-slate-600">RM {item.sales.toFixed(2)}</td>
+                        <td className="px-6 py-4 text-right text-slate-600">RM {item.cost.toFixed(2)}</td>
+                        <td className="px-6 py-4 text-right font-medium text-emerald-600">RM {item.profit.toFixed(2)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const allYears = Array.from(new Set(reports.map(r => getYear(parseISO(r.eventDate || r.date))))).sort((a,b) => b-a);
   if (allYears.length === 0) allYears.push(currentYear);
 
@@ -162,29 +272,39 @@ export default function Dashboard({ reports, onEdit }: DashboardProps) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Financial Overview</h1>
         
-        <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 p-1 print:hidden">
-          <select 
-            value={selectedMonth} 
-            onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10))}
-            className="bg-transparent border-none text-sm font-medium text-slate-700 focus:ring-0 cursor-pointer pl-3 pr-8 py-1.5"
+        <div className="flex items-center gap-3 print:hidden">
+          <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 p-1">
+            <select 
+              value={selectedMonth} 
+              onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10))}
+              className="bg-transparent border-none text-sm font-medium text-slate-700 focus:ring-0 cursor-pointer pl-3 pr-8 py-1.5"
+            >
+              <option value="all">All Months</option>
+              {Array.from({ length: 12 }).map((_, i) => (
+                <option key={i} value={i}>
+                  {format(new Date(2000, i, 1), 'MMMM')}
+                </option>
+              ))}
+            </select>
+            <div className="w-px bg-slate-200 mx-1 my-1"></div>
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+              className="bg-transparent border-none text-sm font-medium text-slate-700 focus:ring-0 cursor-pointer pl-3 pr-8 py-1.5"
+            >
+              {allYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+          <button 
+            onClick={() => setViewingSummary(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm"
           >
-            <option value="all">All Months</option>
-            {Array.from({ length: 12 }).map((_, i) => (
-              <option key={i} value={i}>
-                {format(new Date(2000, i, 1), 'MMMM')}
-              </option>
-            ))}
-          </select>
-          <div className="w-px bg-slate-200 mx-1 my-1"></div>
-          <select 
-            value={selectedYear} 
-            onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-            className="bg-transparent border-none text-sm font-medium text-slate-700 focus:ring-0 cursor-pointer pl-3 pr-8 py-1.5"
-          >
-            {allYears.map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+            <FileBarChart className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Summary Report</span>
+            <span className="sm:hidden">Report</span>
+          </button>
         </div>
       </div>
       
