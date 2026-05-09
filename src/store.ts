@@ -18,9 +18,13 @@ export function useReports() {
     setReports([report, ...reports]); // prepend
   };
 
+  const updateReport = (report: CostingReport) => {
+    setReports(reports.map((r) => (r.id === report.id ? report : r)));
+  };
+
   const deleteReport = (id: string) => {
     setReports(reports.filter((r) => r.id !== id));
   };
 
-  return { reports, addReport, deleteReport };
+  return { reports, addReport, updateReport, deleteReport };
 }
