@@ -20,8 +20,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
+  const [editingReport, setEditingReport] = useState<CostingReport | undefined>(undefined);
   
-  const { reports, addReport, deleteReport } = useReports();
+  const { reports, addReport, updateReport, deleteReport } = useReports();
+
+  const handleEditReport = (report: CostingReport) => {
+    setEditingReport(report);
+    setActiveTab('calculator');
+  };
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -51,7 +57,10 @@ export default function App() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as Tab)}
+                onClick={() => {
+                  if (item.id === 'calculator') setEditingReport(undefined);
+                  setActiveTab(item.id as Tab);
+                }}
                 className={`w-full flex items-center px-4 py-3 rounded-xl transition-all text-sm font-medium ${
                   isActive 
                     ? 'bg-slate-800 text-white' 
@@ -96,7 +105,10 @@ export default function App() {
           <div className="flex items-center gap-3">
             <select 
               value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value as Tab)}
+              onChange={(e) => {
+                if (e.target.value === 'calculator') setEditingReport(undefined);
+                setActiveTab(e.target.value as Tab);
+              }}
               className="border-slate-200 rounded-md text-sm pl-3 py-1.5 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50"
             >
               {navItems.map(item => (
@@ -111,17 +123,24 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 print:p-0 print:overflow-visible">
           <div className="max-w-6xl mx-auto h-full">
-            {activeTab === 'dashboard' && <Dashboard reports={reports} />}
+            {activeTab === 'dashboard' && <Dashboard reports={reports} onEdit={handleEditReport} />}
             {activeTab === 'calculator' && (
               <CostCalculator 
+                key={editingReport?.id || 'new'}
+                initialReport={editingReport}
                 onSave={(report) => {
-                  addReport(report);
+                  if (editingReport) {
+                    updateReport(report);
+                  } else {
+                    addReport(report);
+                  }
+                  setEditingReport(undefined);
                   setActiveTab('reports');
                 }} 
               />
             )}
             {activeTab === 'reports' && (
-              <ReportsList reports={reports} onDelete={deleteReport} />
+              <ReportsList reports={reports} onDelete={deleteReport} onEdit={handleEditReport} />
             )}
             {activeTab === 'ai' && <AIAdvisor />}
           </div>
