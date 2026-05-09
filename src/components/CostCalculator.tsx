@@ -5,16 +5,17 @@ import { getDaysInMonth } from 'date-fns';
 import { CostingReport, MaterialItem, Menu, LabourItem, OverheadItem } from '../types';
 
 interface CostCalculatorProps {
+  initialReport?: CostingReport;
   onSave: (report: CostingReport) => void;
 }
 
-export default function CostCalculator({ onSave }: CostCalculatorProps) {
-  const [title, setTitle] = useState('');
-  const [customerName, setCustomerName] = useState('');
-  const [customerContact, setCustomerContact] = useState('');
-  const [customerAddress, setCustomerAddress] = useState('');
-  const [pax, setPax] = useState<number>(100);
-  const [eventDate, setEventDate] = useState('');
+export default function CostCalculator({ initialReport, onSave }: CostCalculatorProps) {
+  const [title, setTitle] = useState(initialReport?.title || '');
+  const [customerName, setCustomerName] = useState(initialReport?.customerName || '');
+  const [customerContact, setCustomerContact] = useState(initialReport?.customerContact || '');
+  const [customerAddress, setCustomerAddress] = useState(initialReport?.customerAddress || '');
+  const [pax, setPax] = useState<number>(initialReport?.pax || 100);
+  const [eventDate, setEventDate] = useState(initialReport?.eventDate || '');
   
   const daysInMonth = useMemo(() => {
     if (!eventDate) return 30;
@@ -25,19 +26,19 @@ export default function CostCalculator({ onSave }: CostCalculatorProps) {
     }
   }, [eventDate]);
   
-  const [menus, setMenus] = useState<Menu[]>([
+  const [menus, setMenus] = useState<Menu[]>(initialReport?.menus || [
     { id: uuidv4(), name: 'Main Course', materials: [{ id: uuidv4(), name: '', quantity: 1, unit: 'kg', cost: 0 }] }
   ]);
   
-  const [labourItems, setLabourItems] = useState<LabourItem[]>([
+  const [labourItems, setLabourItems] = useState<LabourItem[]>(initialReport?.labourItems || [
     { id: uuidv4(), role: '', staffCount: 1, hours: 1, ratePerHour: 0 }
   ]);
   
-  const [overheadItems, setOverheadItems] = useState<OverheadItem[]>([
+  const [overheadItems, setOverheadItems] = useState<OverheadItem[]>(initialReport?.overheadItems || [
     { id: uuidv4(), name: '', cost: 0, days: 1 }
   ]);
 
-  const [profitMarginPercent, setProfitMarginPercent] = useState<number>(35);
+  const [profitMarginPercent, setProfitMarginPercent] = useState<number>(initialReport?.profitMarginPercent || 35);
 
   const addMenu = () => {
     setMenus([...menus, { id: uuidv4(), name: '', materials: [] }]);
@@ -107,7 +108,7 @@ export default function CostCalculator({ onSave }: CostCalculatorProps) {
     const allMaterials = menus.flatMap(m => m.materials);
     
     const report: CostingReport = {
-      id: uuidv4(),
+      id: initialReport?.id || uuidv4(),
       title,
       customerName,
       customerContact,
@@ -115,7 +116,7 @@ export default function CostCalculator({ onSave }: CostCalculatorProps) {
       pax,
       eventDate,
       days: daysInMonth,
-      date: new Date().toISOString(),
+      date: initialReport?.date || new Date().toISOString(),
       materials: allMaterials,
       menus,
       labourItems,
@@ -135,7 +136,9 @@ export default function CostCalculator({ onSave }: CostCalculatorProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Cost Calculator</h1>
+        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+          {initialReport ? 'Edit Costing' : 'Cost Calculator'}
+        </h1>
         <div className="flex items-center gap-3 print:hidden">
           <button 
             onClick={() => window.print()}
