@@ -72,7 +72,7 @@ export default function Login({ onLogin }: LoginProps) {
           </form>
           
           <div className="mt-8 text-center pt-6 border-t border-slate-100">
-            <p className="text-xs text-slate-400 font-medium">For demo purposes, any email will login.</p>
+            <p className="text-xs text-slate-400 font-medium"> </p>
           </div>
         </div>
       </div>
